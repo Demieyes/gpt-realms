@@ -14,6 +14,17 @@ const match = packedSource.match(/const ASSETS = (\{[\s\S]*?\});\nconst MIME/);
 if (!match) throw new Error('Could not load packed GPT Realms assets.');
 const PACKED = Function('"use strict"; return (' + match[1] + ')')();
 
+const CLIENT_GAME_SOURCE = zlib.gunzipSync(Buffer.from(PACKED['game.js'], 'base64')).toString('utf8');
+console.log('=== GPT REALMS CLIENT IMPORTS ===');
+console.log((CLIENT_GAME_SOURCE.match(/^import .*$/gm) || []).join('\n'));
+for (const term of ['CLASS_ORDER', 'CLASSES', 'class-grid', 'classGrid', 'Choose a class']) {
+  const at = CLIENT_GAME_SOURCE.indexOf(term);
+  if (at >= 0) {
+    console.log('=== CLIENT SOURCE AROUND ' + term + ' ===');
+    console.log(CLIENT_GAME_SOURCE.slice(Math.max(0, at - 1200), at + 3000));
+  }
+}
+
 const MIME = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
