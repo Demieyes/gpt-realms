@@ -94,6 +94,14 @@ async function getAsset(pathname) {
     } catch {}
   }
 
+  // Serve the verified v0.2.2 client instead of the corrupted packed game.js.
+  if (key === 'game.js') {
+    return {
+      body: zlib.gunzipSync(Buffer.from(LIVE_GAME_GZ_B64, 'base64')),
+      path: key
+    };
+  }
+
   // Backward-compatible fallback for the original packed v0.2.2 assets.
   const packed = PACKED[key];
   if (packed) {
