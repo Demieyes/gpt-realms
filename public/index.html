@@ -1,15 +1,16 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>GPT Realms — Classic MMO Prototype</title>
-  <link rel="stylesheet" href="/styles.css" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>GPT Realms</title>
+  <link rel="stylesheet" href="/styles.css?v=030">
 </head>
 <body>
   <div id="game"></div>
-  <div id="boot-status">Ready — choose a class</div>
-  <div id="fatal-error" class="hidden" role="alert">
+  <div id="boot-status">Loading class launcher…</div>
+
+  <div id="fatal-error" class="hidden">
     <strong>GPT Realms could not start</strong>
     <pre id="fatal-error-text"></pre>
     <span>Take a screenshot of this box and send it to ChatGPT.</span>
@@ -17,16 +18,14 @@
 
   <section id="launcher" class="modal">
     <div class="launch-card">
-      <div class="eyebrow">GPT REALMS · CLASSIC MMO BUILD · v0.2.4</div>
+      <div class="eyebrow">GPT REALMS · CLEAN CLIENT · v0.3.0</div>
       <h1>Choose Your Wayfarer</h1>
-      <p class="lead">Original world and classes, rebuilt around classic third-person MMO movement: keyboard turning, strafing, orbit camera, mouselook, jumping and zoom.</p>
-      <div id="class-grid" class="class-grid">
-        <div id="class-loading" style="padding:18px;border:1px solid #655638;color:#d6c7a8;">Loading the six classes…</div>
-      </div>
+      <p class="lead">Six original classes in a classic third-person MMO control scheme.</p>
+      <div id="class-grid" class="class-grid"></div>
       <div class="launch-row">
         <div>
           <strong id="picked-name">Choose a class</strong>
-          <span id="picked-tagline">Six original archetypes.</span>
+          <span id="picked-tagline">Select one of the six Wayfarers above.</span>
         </div>
         <button id="enter-btn" disabled>Enter Aestra</button>
       </div>
@@ -35,53 +34,36 @@
 
   <div id="hud" class="hidden">
     <div class="unit-frame player-frame">
-      <div class="portrait portrait-player"></div>
+      <div class="portrait"></div>
       <div class="unit-body">
-        <div class="unit-title"><strong id="player-name">Wanderer</strong><span id="level-text">1</span></div>
+        <div class="unit-title"><strong id="player-name">Wayfarer</strong><span id="level-text">1</span></div>
         <div class="bar hpbar"><i id="hp-fill"></i><b id="hp-text"></b></div>
         <div class="bar powerbar"><i id="resource-fill"></i><b id="resource-text"></b></div>
       </div>
     </div>
+
     <div id="target-frame" class="unit-frame target-frame hidden">
-      <div class="portrait portrait-target"></div>
+      <div class="portrait"></div>
       <div class="unit-body">
         <div class="unit-title"><strong id="target-name"></strong><span>Target</span></div>
         <div class="bar hpbar"><i id="target-hp"></i></div>
       </div>
     </div>
-    <div class="zone-title"><small>ENTERING</small><strong id="zone-name">Emberwake Coast</strong><span id="zone-mood"></span></div>
-    <div class="minimap-shell"><canvas id="minimap" width="220" height="220"></canvas><div class="minimap-n">N</div></div>
+
+    <div class="zone-title"><small>ENTERING</small><strong id="zone-name">Emberwake Coast</strong><span id="zone-mood">Ash winds over the copper coast.</span></div>
+    <div class="minimap-shell"><canvas id="minimap" width="180" height="180"></canvas><div class="minimap-n">N</div></div>
+
     <div class="quest-tracker"><h3>Quests</h3><strong>Smoke on the Shore</strong><span id="quest-text">Cinderlings slain: 0 / 5</span></div>
-    <div id="companion-panel" class="companion-frame hidden"><strong>Echo</strong><span id="companion-status">Fallback AI</span><em id="companion-say"></em></div>
     <div class="chat-box"><div><span>[Local]</span> Welcome to Emberwake Watch.</div><div><span>[Tip]</span> Right-drag to mouselook. Left-drag to orbit.</div><div id="combat-log"></div></div>
     <div id="toast"></div>
+
     <div class="bottom-cluster">
       <div class="actionbar" id="actionbar"></div>
       <div class="xpbar"><i id="xp-fill"></i><b id="xp-text">0 / 100 XP</b></div>
-      <div class="help">W/S run · A/D turn · Q/E strafe · right-drag mouselook · left-drag orbit · wheel zoom · Space jump · Tab target · right-click attack · 1–4 abilities · G companion</div>
+      <div class="help">W/S run · A/D turn · Q/E strafe · right-drag mouselook · left-drag orbit · wheel zoom · Space jump · Tab target · double-click attack · 1–4 abilities</div>
     </div>
   </div>
 
-  <script>
-    window.__gptRealmsShowError = function(error) {
-      const box = document.getElementById('fatal-error');
-      const text = document.getElementById('fatal-error-text');
-      if (box && text) {
-        const msg = error && (error.stack || error.message) ? (error.stack || error.message) : String(error || 'Unknown startup error');
-        text.textContent = msg;
-        box.classList.remove('hidden');
-      }
-      const status = document.getElementById('boot-status');
-      if (status) status.textContent = 'Startup failed — error shown above';
-    };
-    window.addEventListener('error', function(e) { window.__gptRealmsShowError(e.error || e.message || 'JavaScript load error'); });
-    window.addEventListener('unhandledrejection', function(e) { window.__gptRealmsShowError(e.reason || 'Unhandled promise rejection'); });
-    window.setTimeout(function() {
-      if (!document.querySelector('.class-card')) {
-        window.__gptRealmsShowError('The game module loaded no class cards. Build v0.2.4 diagnostic.');
-      }
-    }, 5000);
-  </script>
-  <script type="module" src="/game.js?v=024"></script>
+  <script src="/launcher.js?v=030"></script>
 </body>
 </html>
