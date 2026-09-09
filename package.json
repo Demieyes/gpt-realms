@@ -1,9 +1,11 @@
 {
   "name": "gpt-realms",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "private": true,
   "type": "module",
   "scripts": {
+    "build": "esbuild public/game-clean.js --bundle --format=esm --platform=browser --outfile=public/game-bundle.js",
+    "postinstall": "npm run build",
     "start": "node server.mjs"
   },
   "engines": {
@@ -11,5 +13,8 @@
   },
   "dependencies": {
     "three": "0.180.0"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.9"
   }
 }
