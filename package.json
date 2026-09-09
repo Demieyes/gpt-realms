@@ -1,10 +1,11 @@
 {
   "name": "gpt-realms",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "esbuild public/game-clean.js --bundle --format=esm --platform=browser --outfile=public/game-bundle.js",
+    "fetch-assets": "node scripts/fetch-assets.mjs",
+    "build": "npm run fetch-assets && esbuild public/game-clean.js --bundle --format=esm --platform=browser --outfile=public/game-bundle.js",
     "postinstall": "npm run build",
     "start": "node server.mjs"
   },
