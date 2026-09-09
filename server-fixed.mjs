@@ -82,21 +82,38 @@ async function askOpenAI(state) {
   return { ...parsed, source: MODEL };
 }
 
+let verifiedGameSourceCache = null;
+
+async function loadVerifiedGameSource() {
+  if (verifiedGameSourceCache) return verifiedGameSourceCache;
+  const parts = await Promise.all([
+    readFile(join(PUBLIC, 'game-parts', 'part1.txt'), 'utf8'),
+    readFile(join(PUBLIC, 'game-parts', 'part2.txt'), 'utf8'),
+    readFile(join(PUBLIC, 'game-parts', 'part3.txt'), 'utf8')
+  ]);
+  const encoded = parts.join('').replace(/\\s+/g, '');
+  let source = zlib.gunzipSync(Buffer.from(encoded, 'base64')).toString('utf8');
+  source = source.replace(
+    "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+    "/three.module.js"
+  );
+  source = source.replace(
+    "const classGrid = $('class-grid');",
+    "const classGrid = $('class-grid');\\nclassGrid.innerHTML = '';"
+  );
+  if (!source.includes("classGrid.appendChild(card)")) {
+    throw new Error('Verified game client is missing class selection code.');
+  }
+  verifiedGameSourceCache = source;
+  return source;
+}
+
 async function getAsset(pathname) {
   const key = pathname === '/' ? 'index.html' : (pathname.startsWith('/') ? pathname.slice(1) : pathname);
 
-  // Serve the verified game client first, before any legacy packed asset.
+  // Serve the verified local game client reconstructed from repository parts.
   if (key === 'game.js') {
-    let source = zlib.gunzipSync(Buffer.from(LIVE_GAME_GZ_B64, 'base64')).toString('utf8');
-    source = source.replace(
-      "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
-      "/three.module.js"
-    );
-    source = source.replace(
-      "const classGrid = $('class-grid');",
-      "const classGrid = $('class-grid');\\nclassGrid.innerHTML = '';"
-    );
-    return { body: Buffer.from(source, 'utf8'), path: key };
+    return { body: Buffer.from(await loadVerifiedGameSource(), 'utf8'), path: key };
   }
 
   // Serve Three.js locally from npm so the browser does not depend on a CDN.
@@ -122,17 +139,14 @@ async function getAsset(pathname) {
   return null;
 }
 
-const verifiedGameSource = zlib.gunzipSync(Buffer.from(LIVE_GAME_GZ_B64, 'base64')).toString('utf8');
-if (!verifiedGameSource.includes("classGrid.appendChild(card)")) {
-  throw new Error('Verified game client is missing class selection code.');
-}
+await loadVerifiedGameSource();
 await Promise.all([
   readFile(join(HERE, 'node_modules', 'three', 'build', 'three.module.js')),
   readFile(join(PUBLIC, 'data', 'classes.js')),
   readFile(join(PUBLIC, 'data', 'world.js')),
   readFile(join(PUBLIC, 'ai', 'gpt-agent.js'))
 ]);
-console.log('GPT Realms asset self-test passed: game + Three.js + class/world/AI modules.');
+console.log('GPT Realms asset self-test passed: verified game + local Three.js + class/world/AI modules.');
 
 http.createServer(async (req, res) => {
   try {
