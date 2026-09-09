@@ -92,6 +92,10 @@ async function getAsset(pathname) {
       "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
       "/three.module.js"
     );
+    source = source.replace(
+      "const classGrid = $('class-grid');",
+      "const classGrid = $('class-grid');\\nclassGrid.innerHTML = '';"
+    );
     return { body: Buffer.from(source, 'utf8'), path: key };
   }
 
@@ -117,6 +121,18 @@ async function getAsset(pathname) {
   }
   return null;
 }
+
+const verifiedGameSource = zlib.gunzipSync(Buffer.from(LIVE_GAME_GZ_B64, 'base64')).toString('utf8');
+if (!verifiedGameSource.includes("classGrid.appendChild(card)")) {
+  throw new Error('Verified game client is missing class selection code.');
+}
+await Promise.all([
+  readFile(join(HERE, 'node_modules', 'three', 'build', 'three.module.js')),
+  readFile(join(PUBLIC, 'data', 'classes.js')),
+  readFile(join(PUBLIC, 'data', 'world.js')),
+  readFile(join(PUBLIC, 'ai', 'gpt-agent.js'))
+]);
+console.log('GPT Realms asset self-test passed: game + Three.js + class/world/AI modules.');
 
 http.createServer(async (req, res) => {
   try {
