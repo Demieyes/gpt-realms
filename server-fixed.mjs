@@ -99,7 +99,7 @@ async function loadVerifiedGameSource() {
   );
   source = source.replace(
     "const classGrid = $('class-grid');",
-    "const classGrid = $('class-grid');\\nclassGrid.innerHTML = '';"
+    "const classGrid = $('class-grid');\nclassGrid.innerHTML = '';"
   );
   if (!source.includes("classGrid.appendChild(card)")) {
     throw new Error('Verified game client is missing class selection code.');
@@ -147,14 +147,6 @@ await Promise.all([
   readFile(join(PUBLIC, 'ai', 'gpt-agent.js'))
 ]);
 console.log('GPT Realms asset self-test passed: verified game + local Three.js + class/world/AI modules.');
-const __src = await loadVerifiedGameSource();
-console.log('CLIENT IMPORTS:', (__src.match(/^import .*$/gm) || []).join(' || '));
-for (const term of ['CLASS_ORDER', 'CLASSES', 'classGrid', 'class-card']) {
-  const pos = __src.indexOf(term);
-  if (pos >= 0) console.log('CLIENT AROUND ' + term + ':', __src.slice(Math.max(0,pos-900), pos+2200));
-}
-
-
 http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url, 'http://' + (req.headers.host || 'localhost'));
