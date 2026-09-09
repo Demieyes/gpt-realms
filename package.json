@@ -1,6 +1,6 @@
 {
   "name": "gpt-realms",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "private": true,
   "type": "module",
   "scripts": {
@@ -8,5 +8,8 @@
   },
   "engines": {
     "node": ">=20"
+  },
+  "dependencies": {
+    "three": "0.180.0"
   }
 }
