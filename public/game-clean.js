@@ -118,17 +118,30 @@ function makeWeapon(def, playerRoot) {
     const w=blade(.55,.06);w.position.y=.18;group.add(w);
   }
 
-  group.scale.setScalar(.75);
-  const hand=findHand(playerRoot,true);
-  if(hand){
-    hand.add(group);
-    group.position.set(0,.02,.02);
-    group.rotation.set(0,0,-Math.PI/2);
-  }else{
-    playerRoot.add(group);
-    group.position.set(.55,1.05,.05);
-    group.rotation.z=-.2;
+  // Do not parent prototype weapons directly to RobotExpressive bones.
+  // That rig uses bone-space transforms that can massively scale child meshes.
+  // Mount gear on the outer player group at a stable world scale for now.
+  group.scale.setScalar(.42);
+  const safeRoot = playerRoot.parent || playerRoot;
+  safeRoot.add(group);
+
+  if(def.gear==='swordShield'){
+    group.position.set(.52,.82,.05);
+    group.rotation.set(0,0,-.18);
+  } else if(def.gear==='dualBlade'){
+    group.position.set(.48,.88,.02);
+    group.rotation.set(0,0,-.12);
+  } else if(def.gear==='scythe'){
+    group.position.set(.62,.62,.06);
+    group.rotation.set(0,0,-.20);
+  } else if(def.gear==='staff' || def.gear==='stormStaff'){
+    group.position.set(.58,.48,.08);
+    group.rotation.set(0,0,-.10);
+  } else {
+    group.position.set(.50,.92,.04);
+    group.rotation.set(0,0,-.18);
   }
+
   return group;
 }
 
@@ -226,7 +239,8 @@ export async function startGame(classId) {
 
   const playerModel=playerGltf.scene;
   tintModel(playerModel,def.color);
-  playerModel.scale.setScalar(.68);
+  playerModel.scale.setScalar(.62);
+  playerModel.position.y=0;
   playerModel.rotation.y=Math.PI;
   player.add(playerModel);
   makeWeapon(def,playerModel);
