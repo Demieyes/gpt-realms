@@ -1,4 +1,4 @@
-import * as THREE from '/three.module.js';
+import * as THREE from 'three';
 
 const CLASS_DEF={
  sentinel:{name:'Sentinel',hp:155,power:15,speed:7.0,color:0x6689a8,resource:'Resolve',abilities:['Shieldbreak','Bulwark','Iron Rush','Last Bastion']},
@@ -51,7 +51,7 @@ export async function startGame(classId){
   for(let i=0;i<30;i++) box((i*19)%120-60,0,((i*37)%120)-70,.8+(i%4),.45+(i%3)*.25,.9+(i%5)*.6,0x574b3e);
 
   const player=new THREE.Group();
-  const body=new THREE.Mesh(new THREE.CapsuleGeometry(.48,1.15,5,9),new THREE.MeshStandardMaterial({color:def.color}));
+  const body=new THREE.Mesh(new THREE.CylinderGeometry(.48,.48,1.15,12),new THREE.MeshStandardMaterial({color:def.color}));
   body.position.y=1.15;player.add(body);
   const head=new THREE.Mesh(new THREE.SphereGeometry(.38,12,8),new THREE.MeshStandardMaterial({color:0xd3a676}));
   head.position.y=2.15;player.add(head);
