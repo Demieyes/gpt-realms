@@ -49,7 +49,7 @@
     enter.textContent='Entering…';
     $('boot-status').textContent='Building Aestra…';
     try{
-      const mod=await import('/game-bundle.js?v=032');
+      const mod=await import('/game-bundle.js?v=033');
       await mod.startGame(selected);
       $('launcher').classList.add('hidden');
       $('hud').classList.remove('hidden');
