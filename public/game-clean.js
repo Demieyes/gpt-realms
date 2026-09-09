@@ -11,6 +11,39 @@ const CLASS_DEF = {
   starbinder:  { name:'Starbinder',  hp:108, power:18, speed:7.2, color:0xb692d0, resource:'Astral',  abilities:['Comet Thread','Gravity Well','Astral Ward','Constellation'], gear:'wand' }
 };
 
+
+const ABILITY_PROFILE = {
+  Shieldbreak:    { anim:'Punch',    vfx:'slash',      mult:1.35, range:5.5, color:0xe6c36a },
+  Bulwark:        { anim:'Yes',      vfx:'shield',     mult:0,    range:0,   color:0x8eb7ff, self:true },
+  'Iron Rush':    { anim:'Running',  vfx:'dash',       mult:1.15, range:6.5, color:0xb9d2ff },
+  'Last Bastion': { anim:'Jump',     vfx:'nova',       mult:1.85, range:7.0, color:0xffd76b },
+
+  'Rift Cut':     { anim:'Punch',    vfx:'arc',        mult:1.4,  range:6.0, color:0xb783ff },
+  'Phase Step':   { anim:'Running',  vfx:'dash',       mult:1.1,  range:7.0, color:0x9b66ff },
+  'Arc Echo':     { anim:'Wave',     vfx:'pulse',      mult:1.35, range:8.0, color:0xc7a4ff },
+  'Zero Meridian':{ anim:'Dance',    vfx:'beam',       mult:2.05, range:9.0, color:0xe1c8ff },
+
+  'Briar Lash':   { anim:'Punch',    vfx:'projectile', mult:1.3,  range:9.0, color:0x6edb6e },
+  'Grasping Soil':{ anim:'Wave',     vfx:'root',       mult:1.0,  range:9.0, color:0x77a44f },
+  'Verdant Mend': { anim:'ThumbsUp', vfx:'heal',       mult:0,    range:0,   color:0x70ef92, self:true, heal:38 },
+  'Ancient Grove':{ anim:'Dance',    vfx:'nova',       mult:1.75, range:8.0, color:0x8edb6b },
+
+  Gravehook:      { anim:'Punch',    vfx:'hook',       mult:1.35, range:8.0, color:0xc86570 },
+  Siphon:         { anim:'Wave',     vfx:'leech',      mult:1.15, range:8.0, color:0xd16478, leech:.55 },
+  Wraithwalk:     { anim:'Running',  vfx:'dash',       mult:1.2,  range:7.0, color:0x8c6aad },
+  'Debt of Death':{ anim:'Jump',     vfx:'nova',       mult:1.9,  range:7.5, color:0xa24a66 },
+
+  'Static Spear': { anim:'Punch',    vfx:'projectile', mult:1.45, range:12.0,color:0x67d9ff },
+  'Thunder Ring': { anim:'Jump',     vfx:'nova',       mult:1.45, range:8.0, color:0x8fe7ff },
+  'Gale Shift':   { anim:'Running',  vfx:'dash',       mult:1.0,  range:7.0, color:0xb4f5ff },
+  Skyfall:        { anim:'Wave',     vfx:'sky',        mult:2.15, range:13.0,color:0x75cfff },
+
+  'Comet Thread': { anim:'Punch',    vfx:'projectile', mult:1.35, range:11.0,color:0xd7b1ff },
+  'Gravity Well': { anim:'Wave',     vfx:'gravity',    mult:1.15, range:10.0,color:0x8b6bb4 },
+  'Astral Ward':  { anim:'Yes',      vfx:'shield',     mult:0,    range:0,   color:0xca9fff, self:true },
+  Constellation:  { anim:'Dance',    vfx:'stars',      mult:1.9,  range:9.0, color:0xead2ff }
+};
+
 const $ = id => document.getElementById(id);
 const clamp = (n,a,b) => Math.max(a, Math.min(b,n));
 let running = false;
@@ -164,6 +197,107 @@ function makeSlash(scene, pos, color) {
   tick();
 }
 
+
+function makePulse(scene, pos, color, radius=1.2, duration=420) {
+  const mat=new THREE.MeshBasicMaterial({color,transparent:true,opacity:.9,side:THREE.DoubleSide,depthWrite:false});
+  const geo=new THREE.RingGeometry(.18,.28,40);
+  const ring=new THREE.Mesh(geo,mat);
+  ring.rotation.x=-Math.PI/2;
+  ring.position.copy(pos).add(new THREE.Vector3(0,.05,0));
+  scene.add(ring);
+  const start=performance.now();
+  function tick(){
+    const t=(performance.now()-start)/duration;
+    if(t>=1){scene.remove(ring);geo.dispose();mat.dispose();return}
+    ring.scale.setScalar(.6+t*radius*3.5);
+    mat.opacity=(1-t)*.9;
+    requestAnimationFrame(tick);
+  }
+  tick();
+}
+
+function makeShield(scene, pos, color) {
+  const geo=new THREE.SphereGeometry(1.15,20,14);
+  const mat=new THREE.MeshBasicMaterial({color,transparent:true,opacity:.24,wireframe:true,depthWrite:false});
+  const mesh=new THREE.Mesh(geo,mat);
+  mesh.position.copy(pos).add(new THREE.Vector3(0,1.05,0));
+  scene.add(mesh);
+  const start=performance.now();
+  function tick(){
+    const t=(performance.now()-start)/700;
+    if(t>=1){scene.remove(mesh);geo.dispose();mat.dispose();return}
+    mesh.rotation.y+=.06;
+    mesh.scale.setScalar(.95+Math.sin(t*Math.PI)*.18);
+    mat.opacity=.28*(1-t);
+    requestAnimationFrame(tick);
+  }
+  tick();
+}
+
+function makeProjectile(scene, from, to, color, kind='orb') {
+  const mat=new THREE.MeshBasicMaterial({color,transparent:true,opacity:.95});
+  const geo=kind==='hook' ? new THREE.TorusGeometry(.16,.04,6,12,Math.PI*1.6) : new THREE.SphereGeometry(.11,10,8);
+  const mesh=new THREE.Mesh(geo,mat);
+  const a=from.clone().add(new THREE.Vector3(0,1.15,0));
+  const b=to.clone().add(new THREE.Vector3(0,1.0,0));
+  mesh.position.copy(a);
+  scene.add(mesh);
+  const start=performance.now();
+  function tick(){
+    const t=Math.min(1,(performance.now()-start)/260);
+    mesh.position.lerpVectors(a,b,t);
+    mesh.rotation.z+=.22;
+    if(t>=1){scene.remove(mesh);geo.dispose();mat.dispose();return}
+    requestAnimationFrame(tick);
+  }
+  tick();
+}
+
+function makeBeam(scene, from, to, color, vertical=false) {
+  const a=vertical ? to.clone().add(new THREE.Vector3(0,7,0)) : from.clone().add(new THREE.Vector3(0,1.2,0));
+  const b=to.clone().add(new THREE.Vector3(0,1.0,0));
+  const mid=a.clone().add(b).multiplyScalar(.5);
+  const len=a.distanceTo(b);
+  const geo=new THREE.CylinderGeometry(.07,.14,len,10);
+  const mat=new THREE.MeshBasicMaterial({color,transparent:true,opacity:.7});
+  const mesh=new THREE.Mesh(geo,mat);
+  mesh.position.copy(mid);
+  mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),b.clone().sub(a).normalize());
+  scene.add(mesh);
+  const start=performance.now();
+  function tick(){
+    const t=(performance.now()-start)/330;
+    if(t>=1){scene.remove(mesh);geo.dispose();mat.dispose();return}
+    mesh.scale.x=mesh.scale.z=1+Math.sin(t*Math.PI)*1.8;
+    mat.opacity=.75*(1-t);
+    requestAnimationFrame(tick);
+  }
+  tick();
+}
+
+function makeStars(scene, pos, color) {
+  const group=new THREE.Group();
+  group.position.copy(pos).add(new THREE.Vector3(0,1.0,0));
+  const mat=new THREE.MeshBasicMaterial({color,transparent:true,opacity:.95});
+  for(let i=0;i<10;i++){
+    const m=new THREE.Mesh(new THREE.OctahedronGeometry(.08,0),mat);
+    const a=i*Math.PI*2/10;
+    m.position.set(Math.cos(a)*1.1,(i%3)*.32,Math.sin(a)*1.1);
+    group.add(m);
+  }
+  scene.add(group);
+  const start=performance.now();
+  function tick(){
+    const t=(performance.now()-start)/650;
+    if(t>=1){scene.remove(group);mat.dispose();return}
+    group.rotation.y+=.08;
+    group.scale.setScalar(.8+t*.8);
+    mat.opacity=1-t;
+    requestAnimationFrame(tick);
+  }
+  tick();
+}
+
 function floatingDamage(container, camera, worldPos, amount, color='#ffd46b') {
   const el=document.createElement('div');
   el.textContent='-'+amount;
@@ -260,7 +394,7 @@ export async function startGame(classId) {
     const root=new THREE.Group();
     const model=cloneSkinned(foxGltf.scene);
     model.scale.setScalar(.025);
-    model.rotation.y=Math.PI;
+    model.rotation.y=0;
     model.traverse(o=>{
       if(o.isMesh){o.castShadow=true;o.receiveShadow=true;o.userData.enemyRoot=root}
     });
@@ -281,11 +415,11 @@ export async function startGame(classId) {
   let combatLocked=false,locomotion='Idle';
   const keys=new Set(),mouse={left:false,right:false,lastX:0,lastY:0};
   const ray=new THREE.Raycaster(),pointer=new THREE.Vector2();
-  let hp=def.hp,xp=0,kills=0,lastAttack=0;
+  let level=1,maxHp=def.hp,power=def.power,hp=maxHp,xp=0,xpNeeded=100,kills=0,lastAttack=0;
 
   $('player-name').textContent=def.name;
   $('level-text').textContent='1';
-  $('hp-text').textContent=`${hp} / ${def.hp}`;
+  $('hp-text').textContent=`${hp} / ${maxHp}`;
   $('resource-text').textContent=`100 ${def.resource}`;
   $('zone-mood').textContent='Ash winds over the copper coast.';
   const bar=$('actionbar');bar.innerHTML='';
@@ -294,6 +428,7 @@ export async function startGame(classId) {
   });
 
   const showToast=t=>{const x=$('toast');x.textContent=t;x.style.opacity='1';setTimeout(()=>x.style.opacity='0',850)};
+  updateProgressUI();
   function setTarget(t){
     target=t&&!t.userData.dead?t:null;
     if(!target){$('target-frame').classList.add('hidden');targetRing.visible=false;return}
@@ -312,12 +447,125 @@ export async function startGame(classId) {
     });
   }
 
+  function updateProgressUI(){
+    $('level-text').textContent=String(level);
+    $('hp-text').textContent=`${hp} / ${maxHp}`;
+    $('hp-fill').style.width=(100*hp/maxHp)+'%';
+    $('xp-fill').style.width=(100*xp/xpNeeded)+'%';
+    $('xp-text').textContent=`${xp} / ${xpNeeded} XP`;
+  }
+
+  function awardXP(amount){
+    xp+=amount;
+    let leveled=false;
+    while(xp>=xpNeeded){
+      xp-=xpNeeded;
+      level++;
+      xpNeeded=Math.round(100*Math.pow(1.28,level-1));
+      maxHp=Math.round(def.hp*(1+0.09*(level-1)));
+      power=Math.round(def.power*(1+0.07*(level-1)));
+      hp=maxHp;
+      leveled=true;
+    }
+    if(leveled){
+      showToast(`LEVEL ${level}! HP and Power increased`);
+      makePulse(scene,player.position.clone(),0xffdf79,2.4,800);
+    }
+    updateProgressUI();
+  }
+
+  function damageTarget(amount, profile){
+    if(!target||target.userData.dead)return;
+    const victim=target;
+    victim.userData.hp=Math.max(0,victim.userData.hp-amount);
+    victim.userData.flashUntil=performance.now()+120;
+    floatingDamage(document.body,camera,victim.position.clone(),amount);
+    $('target-hp').style.width=(100*victim.userData.hp/victim.userData.maxHp)+'%';
+
+    if(profile?.leech){
+      const heal=Math.max(1,Math.round(amount*profile.leech));
+      hp=Math.min(maxHp,hp+heal);
+      updateProgressUI();
+    }
+
+    if(victim.userData.hp<=0){
+      victim.userData.dead=true;
+      victim.userData.anim.loop('Survey');
+      kills++;
+      awardXP(25);
+      $('quest-text').textContent=`Cinderlings slain: ${Math.min(kills,5)} / 5`;
+      setTarget(null);
+      const start=performance.now();
+      const shrink=()=>{
+        const t=(performance.now()-start)/420;
+        if(t>=1){scene.remove(victim);return}
+        victim.scale.setScalar(1-t*.85);victim.position.y=-t*.35;requestAnimationFrame(shrink);
+      };
+      shrink();
+    }
+  }
+
+  function useAbility(index){
+    const name=def.abilities[index];
+    const profile=ABILITY_PROFILE[name] || {anim:'Punch',vfx:'slash',mult:1.2,range:6,color:def.color};
+    const now=performance.now();
+    if(now-lastAttack<620)return;
+    lastAttack=now;
+
+    if(profile.self){
+      playOneShot(profile.anim);
+      if(profile.vfx==='shield')makeShield(scene,player.position.clone(),profile.color);
+      if(profile.vfx==='heal'){
+        makePulse(scene,player.position.clone(),profile.color,2.0,650);
+        hp=Math.min(maxHp,hp+(profile.heal||30));
+        updateProgressUI();
+        floatingDamage(document.body,camera,player.position.clone(),profile.heal||30,'#7cff9a');
+      }
+      showToast(name);
+      return;
+    }
+
+    if(!target||target.userData.dead){showToast('Select a target');return}
+    const dist=player.position.distanceTo(target.position);
+    if(dist>(profile.range||6)){showToast('Out of range');return}
+
+    const victim=target;
+    const damage=Math.round(power*(profile.mult||1));
+    playOneShot(profile.anim);
+
+    switch(profile.vfx){
+      case 'slash': makeSlash(scene,player.position.clone(),profile.color); break;
+      case 'arc': makeSlash(scene,victim.position.clone(),profile.color); makePulse(scene,victim.position.clone(),profile.color,.8,300); break;
+      case 'dash': {
+        const dir=victim.position.clone().sub(player.position);dir.y=0;if(dir.lengthSq()>0)dir.normalize();
+        makePulse(scene,player.position.clone(),profile.color,.7,260);
+        player.position.addScaledVector(dir,Math.min(2.3,Math.max(0,dist-1.8)));
+        makePulse(scene,player.position.clone(),profile.color,.7,260);
+        break;
+      }
+      case 'nova': makePulse(scene,player.position.clone(),profile.color,2.2,520); break;
+      case 'pulse': makePulse(scene,victim.position.clone(),profile.color,1.5,430); break;
+      case 'projectile': makeProjectile(scene,player.position.clone(),victim.position.clone(),profile.color,'orb'); break;
+      case 'hook': makeProjectile(scene,player.position.clone(),victim.position.clone(),profile.color,'hook'); break;
+      case 'root': makePulse(scene,victim.position.clone(),profile.color,1.1,700); break;
+      case 'leech': makeBeam(scene,victim.position.clone(),player.position.clone(),profile.color,false); break;
+      case 'beam': makeBeam(scene,player.position.clone(),victim.position.clone(),profile.color,false); break;
+      case 'sky': makeBeam(scene,player.position.clone(),victim.position.clone(),profile.color,true); break;
+      case 'gravity': makePulse(scene,victim.position.clone(),profile.color,1.9,650); break;
+      case 'stars': makeStars(scene,victim.position.clone(),profile.color); break;
+      default: makeSlash(scene,player.position.clone(),profile.color);
+    }
+
+    setTimeout(()=>damageTarget(damage,profile),profile.vfx==='projectile'||profile.vfx==='hook'?250:150);
+    showToast(name);
+  }
+
   function attack(mult=1,label='Attack'){
     if(!target||target.userData.dead)return;
     const dist=player.position.distanceTo(target.position);
     if(dist>5.5){showToast('Out of range');return}
     const now=performance.now();if(now-lastAttack<560)return;lastAttack=now;
-    const damage=Math.round(def.power*mult);
+    const damage=Math.round(power*mult);
     playOneShot('Punch');
     makeSlash(scene,player.position.clone(),def.color);
     setTimeout(()=>{
@@ -329,9 +577,9 @@ export async function startGame(classId) {
       if(target.userData.hp<=0){
         const dead=target;dead.userData.dead=true;
         dead.userData.anim.loop('Survey');
-        kills++;xp+=25;
+        kills++;
+        awardXP(25);
         $('quest-text').textContent=`Cinderlings slain: ${Math.min(kills,5)} / 5`;
-        $('xp-fill').style.width=Math.min(xp,100)+'%';$('xp-text').textContent=`${xp} / 100 XP`;
         setTarget(null);
         const start=performance.now();
         const shrink=()=>{
@@ -358,7 +606,7 @@ export async function startGame(classId) {
     if(e.code==='KeyF')attack(1,'Basic attack');
     if(/^Digit[1-4]$/.test(e.code)){
       const n=Number(e.code.at(-1))-1;
-      attack(1.15+n*.22,def.abilities[n]);
+      useAbility(n);
     }
   },{passive:false});
   addEventListener('keyup',e=>keys.delete(e.code));
@@ -416,13 +664,13 @@ export async function startGame(classId) {
       if(d<15&&d>2.2){
         const dir=player.position.clone().sub(e.position);dir.y=0;dir.normalize();
         e.position.addScaledVector(dir,3.2*dt);
-        e.rotation.y=Math.atan2(dir.x,dir.z);
+        e.rotation.y=Math.atan2(dir.x,dir.z)+Math.PI;
         desired='Run';
       }else if(d>=15){
         e.userData.wanderPhase+=dt*.45;
         const dest=e.userData.home.clone().add(new THREE.Vector3(Math.sin(e.userData.wanderPhase)*3,0,Math.cos(e.userData.wanderPhase*.8)*3));
         const dir=dest.sub(e.position);dir.y=0;
-        if(dir.length()>.4){dir.normalize();e.position.addScaledVector(dir,1.1*dt);e.rotation.y=Math.atan2(dir.x,dir.z);desired='Walk'}
+        if(dir.length()>.4){dir.normalize();e.position.addScaledVector(dir,1.1*dt);e.rotation.y=Math.atan2(dir.x,dir.z)+Math.PI;desired='Walk'}
       }
       e.userData.anim.loop(desired,.22);
       e.userData.anim.mixer.update(dt);
