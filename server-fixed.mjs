@@ -83,9 +83,26 @@ async function askOpenAI(state) {
 }
 
 async function getAsset(pathname) {
-  const key = pathname === '/' ? 'index.html' : pathname.replace(/^\//, '');
+  const key = pathname === '/' ? 'index.html' : pathname.replace(/^\\//, '');
 
-  // Prefer normal files in /public. This makes future ChatGPT updates simple.
+  // Serve the verified game client first, before any legacy packed asset.
+  if (key === 'game.js') {
+    let source = zlib.gunzipSync(Buffer.from(LIVE_GAME_GZ_B64, 'base64')).toString('utf8');
+    source = source.replace(
+      "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+      "/three.module.js"
+    );
+    return { body: Buffer.from(source, 'utf8'), path: key };
+  }
+
+  // Serve Three.js locally from npm so the browser does not depend on a CDN.
+  if (key === 'three.module.js') {
+    return {
+      body: await readFile(join(HERE, 'node_modules', 'three', 'build', 'three.module.js')),
+      path: key
+    };
+  }
+
   const safe = normalize(key).replace(/^([.][.][/\\])+/, '').replace(/^[/\\]+/, '');
   const filePath = join(PUBLIC, safe);
   if (filePath.startsWith(PUBLIC)) {
@@ -94,15 +111,6 @@ async function getAsset(pathname) {
     } catch {}
   }
 
-  // Serve the verified v0.2.2 client instead of the corrupted packed game.js.
-  if (key === 'game.js') {
-    return {
-      body: zlib.gunzipSync(Buffer.from(LIVE_GAME_GZ_B64, 'base64')),
-      path: key
-    };
-  }
-
-  // Backward-compatible fallback for the original packed v0.2.2 assets.
   const packed = PACKED[key];
   if (packed) {
     return { body: zlib.gunzipSync(Buffer.from(packed, 'base64')), path: key };
