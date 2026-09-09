@@ -76,7 +76,7 @@ http.createServer(async(req,res)=>{
     const url=new URL(req.url,'http://'+(req.headers.host||'localhost'));
 
     if(req.method==='GET'&&url.pathname==='/api/health'){
-      return sendJson(res,200,{ok:true,version:'0.3.0',gptEnabled:Boolean(process.env.OPENAI_API_KEY)});
+      return sendJson(res,200,{ok:true,version:'0.3.4',gptEnabled:Boolean(process.env.OPENAI_API_KEY)});
     }
 
     if(req.method==='POST'&&url.pathname==='/api/agent/decide'){
@@ -99,4 +99,4 @@ http.createServer(async(req,res)=>{
   }catch(error){
     sendJson(res,500,{error:String(error.message||error)});
   }
-}).listen(PORT,()=>console.log('GPT Realms v0.3.0 running on '+PORT));
+}).listen(PORT,()=>console.log('GPT Realms v0.3.4 running on '+PORT));
