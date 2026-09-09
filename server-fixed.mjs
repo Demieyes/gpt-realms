@@ -83,7 +83,7 @@ async function askOpenAI(state) {
 }
 
 async function getAsset(pathname) {
-  const key = pathname === '/' ? 'index.html' : pathname.replace(/^\\//, '');
+  const key = pathname === '/' ? 'index.html' : (pathname.startsWith('/') ? pathname.slice(1) : pathname);
 
   // Serve the verified game client first, before any legacy packed asset.
   if (key === 'game.js') {
@@ -103,7 +103,7 @@ async function getAsset(pathname) {
     };
   }
 
-  const safe = normalize(key).replace(/^([.][.][/\\])+/, '').replace(/^[/\\]+/, '');
+  const safe = normalize(key).replaceAll('\\\\', '/').split('/').filter(part => part && part !== '..').join('/');
   const filePath = join(PUBLIC, safe);
   if (filePath.startsWith(PUBLIC)) {
     try {
